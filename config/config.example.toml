@@ -1,0 +1,28 @@
+[security]
+secure_boot_required = true
+tpm_required = true
+lock_on_tamper = true
+network_quarantine = true
+lock_timeout_secs = 300
+
+[risk]
+elevated_threshold = 30
+lockdown_threshold = 60
+quarantine_threshold = 80
+
+[audit]
+remote_logging = false
+hash_chain = true
+remote_endpoint = ""
+max_log_size_mb = 100
+
+[sensors]
+monitor_temperature = true
+monitor_usb = true
+monitor_pcie = true
+monitor_chassis = true
+monitor_acpi = false
+
+[logging]
+level = "info"
+json_format = true
