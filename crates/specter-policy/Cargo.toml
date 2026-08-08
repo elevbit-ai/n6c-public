@@ -1,0 +1,15 @@
+[package]
+name = "specter-policy"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Decision engine, channel allowlist, and policy enforcement"
+
+[dependencies]
+specter-common = { path = "../specter-common" }
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+chrono.workspace = true
+uuid.workspace = true

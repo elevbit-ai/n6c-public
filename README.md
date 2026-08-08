@@ -1,78 +1,71 @@
-# Data-Scorched Safe
+# SPECTER-NET
 
-**N6 Cybernetics — Hardened Device Protection System**
+**N6 Cybernetics — Defensive RF Spectrum Monitoring & Communication Resilience**
 
-Sistema real de proteção contra adulteração, extração física e comprometimento de dispositivos em ambientes hostis.
+Sistema defensivo de monitoramento de espectro RF e resiliência automática de comunicações autorizadas.
 
 ---
 
 ## Visão Geral
 
-O **Data-Scorched Safe** é um sistema de segurança desenvolvido pela N6 Cybernetics para proteção de dispositivos móveis endurecidos, equipamentos embarcados e servidores instalados em ambientes de alto risco físico.
-
-O sistema monitora sinais físicos e lógicos de adulteração em tempo real, aplica respostas defensivas automáticas e preserva evidências para investigação — sem nunca executar ações destrutivas ou anti-forenses.
+O **SPECTER-NET** monitora continuamente o espectro de radiofrequência, detecta interferência e jamming, e aplica mudanças automáticas de canal em rádios autorizados para manter comunicações disponíveis.
 
 ## Arquitetura
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  data-scorched-agent                 │
-│              (Daemon principal — Rust)                │
-├──────────┬──────────┬──────────┬──────────┬─────────┤
-│ hardware │integrity │  policy  │ response │  audit   │
-│ monitor  │  engine  │  engine  │  engine  │   log    │
-├──────────┴──────────┴──────────┴──────────┴─────────┤
-│                   crypto-manager                     │
-│              (AES-256-GCM + HMAC-SHA256)             │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                    specter-console                       │
+│                (Dashboard React + TypeScript)             │
+├─────────────────────────────────────────────────────────┤
+│                     specter-core                         │
+│           (Servidor Central — Rust + Axum)                │
+├─────────────┬─────────────┬─────────────┬───────────────┤
+│  specter-   │  specter-   │  specter-   │   specter-    │
+│  detector   │   policy    │    core     │  radio-agent  │
+│             │             │   (API)     │               │
+├─────────────┴─────────────┴─────────────┴───────────────┤
+│                    specter-sensor                         │
+│           (Daemon — Rust + Tokio + SoapySDR)              │
+├─────────────────────────────────────────────────────────┤
+│                  Hardware SDR (RTL-SDR / USRP)            │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Máquina de Estados
+### Fluxo de Dados
 
 ```
-NORMAL ──→ ELEVATED ──→ LOCKDOWN ──→ QUARANTINE ──→ RECOVERY ──→ NORMAL
+SDR Hardware
+  -> Driver (SoapySDR)
+  -> Buffer Circular
+  -> FFT
+  -> PSD
+  -> Noise Floor Estimation
+  -> Channel Occupancy
+  -> Anomaly Detection
+  -> Event Engine
+  -> API / Dashboard
 ```
-
-| Estado | Descrição |
-|--------|-----------|
-| **NORMAL** | Operação regular |
-| **ELEVATED** | Eventos incomuns detectados |
-| **LOCKDOWN** | Dispositivo bloqueado, sessões encerradas |
-| **QUARANTINE** | Serviços não essenciais desativados |
-| **RECOVERY** | Aguardando autenticação administrativa |
 
 ## Componentes
 
 | Crate | Descrição |
 |-------|-----------|
-| `ds-common` | Tipos compartilhados, configuração, erros, eventos |
-| `ds-hardware` | Monitoramento de USB, temperatura, chassis, TPM |
-| `ds-integrity` | Verificação de Secure Boot, TPM 2.0, kernel, módulos |
-| `ds-policy` | Engine de risco determinístico e política |
-| `ds-crypto` | Criptografia AES-256-GCM, HMAC-SHA256, chaves |
-| `ds-response` | Respostas defensivas automáticas |
-| `ds-audit` | Logs append-only com hash chain |
-| `ds-agent` | Daemon + CLI `datascorched` |
-
-## Sensores Suportados
-
-| Sensor | Fonte | Plataforma |
-|--------|-------|------------|
-| Temperatura | `/sys/class/hwmon`, `/sys/class/thermal` | Linux |
-| USB | `/sys/bus/usb/devices` | Linux |
-| TPM 2.0 | `/dev/tpm0` | Linux |
-| Secure Boot | EFI variables | Linux UEFI |
-| Chassis | IPMI / sysfs | Variável |
-| Kernel modules | `/proc/modules` | Linux |
+| `specter-common` | Tipos compartilhados, configuração, erros |
+| `specter-dsp` | Pipeline DSP: FFT, PSD, noise floor, ocupação |
+| `specter-sdr` | Camada de abstração de hardware SDR |
+| `specter-detector` | Motor de detecção de interferência/jamming |
+| `specter-policy` | Engine de decisão, allowlist, políticas |
+| `specter-core` | Servidor central, API REST, correlação |
+| `specter-sensor` | Daemon do sensor RF |
+| `specter-radio-agent` | Agente de controle de rádios autorizados |
 
 ## Compilação
 
 ### Requisitos
 
-- Rust 1.70+ (instalar via [rustup](https://rustup.rs))
-- Linux (kernel 5.4+)
-- UEFI com Secure Boot (opcional)
-- TPM 2.0 (opcional)
+- Rust 1.70+ ([rustup](https://rustup.rs))
+- PostgreSQL 14+
+- SoapySDR (opcional, para hardware real)
 
 ```bash
 # Instalar Rust
@@ -82,103 +75,126 @@ source $HOME/.cargo/env
 # Compilar
 cargo build --release
 
-# Binário resultante
-target/release/datascorched
+# Binários resultantes
+target/release/specter-core
+target/release/specter-cli
 ```
 
 ## Instalação
 
 ```bash
-# Instalar binário
-sudo cp target/release/datascorched /usr/local/bin/
+# Criar usuário do sistema
+sudo useradd -r -s /bin/false specter
+
+# Instalar binários
+sudo cp target/release/specter-core /usr/local/bin/
+sudo cp target/release/specter-cli /usr/local/bin/
 
 # Criar estrutura de configuração
-sudo mkdir -p /etc/datascorched
-sudo cp config/config.example.toml /etc/datascorched/config.toml
+sudo mkdir -p /etc/specter-net
+sudo cp config/specter.toml /etc/specter-net/specter.toml
 
-# Criar diretório de logs
-sudo mkdir -p /var/log/datascorched
+# Criar diretórios
+sudo mkdir -p /var/lib/specter-net
+sudo mkdir -p /var/log/specter-net
 
-# Instalar e habilitar serviço
-sudo cp packaging/systemd/datascorched.service /etc/systemd/system/
+# Instalar serviços
+sudo cp packaging/systemd/*.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable datascorched
-sudo systemctl start datascorched
+sudo systemctl enable specter-core specter-sensor specter-radio-agent
+
+# Criar banco de dados
+sudo -u postgres createdb specter_net
+sudo -u postgres psql -c "CREATE USER specter WITH PASSWORD 'specter';"
+sudo -u postgres psql -c "GRANT ALL ON DATABASE specter_net TO specter;"
+psql -U specter -d specter_net -f migrations/001_init.sql
+
+# Iniciar serviços
+sudo systemctl start specter-core
 ```
 
 ## Uso
 
 ```bash
-# Status do sistema
-datascorched status
+# Verificar status
+specter-cli status
 
-# Listar sensores e dispositivos
-datascorched sensors
-
-# Verificar integridade do sistema
-datascorched integrity
-
-# Visualizar eventos de auditoria
-datascorched events
-
-# Ativar lockdown manual
-datascorched lockdown
-
-# Iniciar recuperação
-datascorched recover
+# Ver configuração
+specter-cli config
 
 # Validar configuração
-datascorched policy validate
+specter-cli validate
 
-# Verificar integridade dos logs
-datascorched audit verify
+# Ver versão
+specter-cli version
 ```
 
 ## Configuração
 
-Arquivo: `/etc/datascorched/config.toml`
+Arquivo: `/etc/specter-net/specter.toml`
 
 ```toml
+[system]
+site_name = "LAB-01"
+log_level = "info"
+
+[rf]
+device = "soapy"
+sample_rate = 2400000
+center_frequency_hz = 433000000
+fft_size = 4096
+window_function = "hann"
+
+[policy]
+automatic_channel_change = true
+minimum_confidence = 0.85
+cooldown_seconds = 120
+max_changes_per_hour = 4
+
 [security]
-secure_boot_required = true
-tpm_required = true
-lock_on_tamper = true
-network_quarantine = true
-lock_timeout_secs = 300
+require_mtls = true
 
-[risk]
-elevated_threshold = 30
-lockdown_threshold = 60
-quarantine_threshold = 80
+[database]
+url = "postgres://specter:specter@localhost/specter_net"
 
-[audit]
-remote_logging = false
-hash_chain = true
-
-[sensors]
-monitor_temperature = true
-monitor_usb = true
-monitor_pcie = true
-monitor_chassis = true
+[server]
+bind_address = "0.0.0.0"
+port = 8080
 ```
 
-## Princípios de Segurança
+## API REST
 
-1. **Defesa em Profundidade** — Múltiplas camadas de proteção
-2. **Menor Privilégio** — Serviço roda com permissões mínimas
-3. **Fail-Safe** — Falhas preservam dados e evidências
-4. **Sem Ações Destrutivas** — Nunca sobrescreve ou apaga dados automaticamente
-5. **Auditoria Completa** — Todos os eventos são registrados com hash chain
-6. **Recuperação Garantida** — Sempre permitir restauração administrativa
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/api/v1/health` | GET | Health check |
+| `/api/v1/sensors` | GET | Listar sensores |
+| `/api/v1/sensors/{id}` | GET | Detalhes do sensor |
+| `/api/v1/spectrum/current` | GET | Espectro atual |
+| `/api/v1/events` | GET | Eventos RF |
+| `/api/v1/radios` | GET | Rádios gerenciados |
+| `/api/v1/radios/{id}/channel-change` | POST | Trocar canal |
+| `/api/v1/channels` | GET | Canais disponíveis |
+| `/api/v1/alerts` | GET | Alertas |
+| `/api/v1/audit` | GET | Log de auditoria |
+
+## Segurança
+
+- TLS 1.3 com mTLS
+- RBAC (VIEWER, OPERATOR, ADMIN, AUDITOR)
+- Comandos assinados com nonce e timestamp
+- Rate limiting
+- Validação de allowlist
+- Rollback automático em falha
+- Logs de auditoria com hash chain
 
 ## Limitações
 
-O sistema **não** protege contra:
-- Atacantes com acesso físico prolongado e equipamento de laboratório
-- Comprometimento de firmware não detectável
-- Vulnerabilidades de hardware (spectre, meltdown, etc.)
-- Chaves criptográficas já expostas antes da ativação
-- Ataques anteriores à instalação do sistema
+O sistema **não** executa:
+- Transmissão de sinais de jamming
+- Interferência em redes de terceiros
+- Spoofing de dispositivos
+- Captura de conteúdo de comunicações
+- Mudança de frequência fora de bandas autorizadas
 
 ## Licença
 
@@ -190,4 +206,4 @@ MIT — Ver [LICENSE](LICENSE)
 
 ---
 
-*N6 Cybernetics — Hardened Security Systems*
+*N6 Cybernetics — Defensive RF Systems*

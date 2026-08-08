@@ -1,0 +1,70 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/specter-common",
+    "crates/specter-dsp",
+    "crates/specter-sdr",
+    "crates/specter-detector",
+    "crates/specter-policy",
+    "crates/specter-core",
+    "crates/specter-sensor",
+    "crates/specter-radio-agent",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Joaquim Pedro de Morais Filho"]
+license = "MIT"
+repository = "https://github.com/n6c-cybernetics/n6c-pub"
+description = "SPECTER-NET - Defensive RF Spectrum Monitoring & Communication Resilience"
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+anyhow = "1"
+thiserror = "2"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+toml = "0.8"
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid", "chrono"] }
+axum = { version = "0.8", features = ["macros"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+prometheus = "0.13"
+dotenvy = "0.15"
+async-trait = "0.1"
+
+[[bin]]
+name = "specter-core"
+path = "src/main.rs"
+
+[[bin]]
+name = "specter-cli"
+path = "src/cli.rs"
+
+[package]
+name = "specter-net"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description.workspace = true
+
+[dependencies]
+specter-core = { path = "crates/specter-core" }
+specter-common = { path = "crates/specter-common" }
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+toml.workspace = true
+serde_json.workspace = true
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

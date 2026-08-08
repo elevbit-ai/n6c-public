@@ -1,49 +1,52 @@
-# Threat Model
+# Threat Model — SPECTER-NET
 
-## Asset Protection
+## Atores Considerados
 
-- Dados sensíveis em dispositivos móveis e embarcados
-- Integridade do sistema operacional
-- Confidencialidade de chaves e credenciais
-- Disponibilidade do serviço
+| Ator | Capacidade | Vetor |
+|------|-----------|-------|
+| Jammer externo | Transmissor RF | Interferência de banda larga/estreita |
+| Intruso de rede | Acesso LAN | Interceptação, injeção |
+| Insider malicioso | Credenciais válidas | Abuso de API, configuração indevida |
+| Atacante físico | Acesso ao hardware | Manipulação de SDR, cables |
 
-## Threat Actors
+## Defesas
 
-### 1. Atacante com Acesso Físico
-- **Capacidade**: Acesso direto ao hardware
-- **Técnicas**: Remoção de disco, acesso a portas, manipulação de hardware
-- **Defesa**: Sensores de chassis, criptografia de disco, detecção de adulteração
+### Contra Jamming
 
-### 2. Dispositivo USB Malicioso
-- **Capacidade**: Inserção de dispositivo USB modificado
-- **Técnicas**: BadUSB, keylogger, storage malicioso
-- **Defesa**: Monitoramento USB, whitelist de dispositivos
+- Detecção multi-evidência (noise floor, occupancy, SNR, correlação)
+- Troca automática de canal para frequência limpa
+- Allowlist de canais autorizados
+- Cooldown para evitar oscilação
+- Rollback em falha
 
-### 3. Periférico DMA
-- **Capacidade**: Acesso via Thunderbolt/PCIe
-- **Técnicas**: DMA attack via Firewire, Thunderbolt
-- **Defesa**: Monitoramento PCIe, bloqueio de dispositivos não autorizados
+### Contra Intrusão de Rede
 
-### 4. Boot Externo
-- **Capacidade**: Boot de mídia externa
-- **Técnicas**: Live USB, boot bypass
-- **Defesa**: Secure Boot, verificação de integridade
+- TLS 1.3 obrigatório
+- mTLS entre sensores e servidor
+- Rate limiting em todas as APIs
+- Validação de input
+- RBAC em todas as operações
 
-### 5. Comprometimento Parcial do SO
-- **Capacidade**: Acesso como usuário não privilegiado
-- **Técnicas**: Escalation de privilégio, persistence
-- **Defesa**: Namespaces, cgroups, monitoramento de módulos
+### Contra Insider
 
-## Security Controls
+- Logs de auditoria append-only
+- Separação de perfis (VIEWER/OPERATOR/ADMIN/AUDITOR)
+- Comandos assinados com nonce + timestamp
+- Validação de allowlist em múltiplas etapas
+- Rollback automático
 
-| Control | Type | Implementation |
-|---------|------|----------------|
-| Secure Boot | Preventive | UEFI verification |
-| TPM 2.0 | Detective | PCR validation |
-| LUKS2 | Preventive | Disk encryption |
-| IMA/EVM | Detective | File integrity |
-| dm-verity | Preventive | Block device integrity |
-| eBPF | Detective | Runtime monitoring |
-| Chassis sensor | Detective | Physical tamper detection |
-| USB monitoring | Detective | Device enumeration |
-| Audit logging | Detective | Append-only logs with hash chain |
+### Contra Acesso Físico
+
+- Sensores de chassis (quando disponível)
+- Criptografia de dados em repouso
+- Validação de integridade do hardware
+- Alertas de desconexão
+
+## Limitações
+
+O sistema NÃO protege contra:
+- Jamming de banda larga extremo que cubra toda a faixa
+- Comprometimento físico prolongado do hardware
+- Vulnerabilidades de implementação de hardware
+- Chaves comprometidas antes da instalação
+- Ataques anteriores à implantação do sistema

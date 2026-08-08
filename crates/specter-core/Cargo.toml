@@ -1,0 +1,25 @@
+[package]
+name = "specter-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Central server: API, telemetry ingestion, correlation, storage"
+
+[dependencies]
+specter-common = { path = "../specter-common" }
+specter-detector = { path = "../specter-detector" }
+specter-policy = { path = "../specter-policy" }
+tokio.workspace = true
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+prometheus.workspace = true

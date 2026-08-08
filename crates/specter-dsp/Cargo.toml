@@ -1,0 +1,12 @@
+[package]
+name = "specter-dsp"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "DSP pipeline: FFT, PSD, noise floor estimation, channel occupancy"
+
+[dependencies]
+specter-common = { path = "../specter-common" }
+thiserror.workspace = true
+tracing.workspace = true

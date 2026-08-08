@@ -1,0 +1,23 @@
+[Unit]
+Description=SPECTER-NET Core Server
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=specter
+Group=specter
+ExecStart=/usr/local/bin/specter-core
+Restart=always
+RestartSec=5
+Environment=SPECTER_CONFIG=/etc/specter-net/specter.toml
+Environment=RUST_LOG=info
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/specter-net /var/log/specter-net
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

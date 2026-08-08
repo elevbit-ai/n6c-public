@@ -1,0 +1,21 @@
+[package]
+name = "specter-radio-agent"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Radio agent: channel changes, allowlist validation, rollback"
+
+[dependencies]
+specter-common = { path = "../specter-common" }
+specter-policy = { path = "../specter-policy" }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+toml.workspace = true
+async-trait.workspace = true

@@ -1,0 +1,14 @@
+[package]
+name = "specter-sdr"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "SDR hardware abstraction layer (SoapySDR, RTL-SDR, USRP)"
+
+[dependencies]
+specter-common = { path = "../specter-common" }
+thiserror.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+anyhow.workspace = true

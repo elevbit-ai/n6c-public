@@ -1,0 +1,15 @@
+[package]
+name = "specter-detector"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Interference and jamming detection engine"
+
+[dependencies]
+specter-common = { path = "../specter-common" }
+specter-dsp = { path = "../specter-dsp" }
+thiserror.workspace = true
+tracing.workspace = true
+serde.workspace = true
+chrono.workspace = true

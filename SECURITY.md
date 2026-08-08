@@ -1,65 +1,75 @@
-# Security Policy — Data-Scorched Safe
+# Security Policy — SPECTER-NET
 
 **N6 Cybernetics**
-
-## Reportar Vulnerabilidades
-
-Se você descobrir uma vulnerabilidade de segurança no Data-Scorched Safe, por favor reporte de forma responsável.
 
 ## Princípios de Design
 
 | Princípio | Descrição |
 |-----------|-----------|
-| Defesa em Profundidade | Múltiplas camadas de segurança sobrepostas |
-| Menor Privilégio | Serviço opera com privilégios mínimos necessários |
-| Fail-Safe | Falhas preservam dados e evidências |
-| Sem Destruição | Nunca executar destruição automática de dados |
+| Defesa em Profundidade | Múltiplas camadas de segurança |
+| Menor Privilégio | Serviços operam com privilégios mínimos |
+| Fail-Safe | Falhas preservam dados e estado |
 | Auditoria Total | Todos os eventos são registrados |
 | Recuperação | Sempre permitir restauração administrativa |
 
 ## Modelo de Ameaças
 
-### Atores Considerados
+### Vetores Considerados
 
 | Ameaça | Vetor | Defesa |
 |--------|-------|--------|
-| Acesso físico | Remoção de disco, manipulação de hardware | Sensores de chassis, criptografia LUKS2 |
-| USB malicioso | BadUSB, keylogger, storage modificado | Monitoramento USB, whitelist |
-| Periférico DMA | Thunderbolt, Firewire | Monitoramento PCIe, bloqueio |
-| Boot externo | Live USB, boot bypass | Secure Boot, verificação de integridade |
-| Comprometimento parcial | Escalation de privilégio | Namespaces, cgroups, eBPF |
-| Insider | Conta não privilegiada | RBAC, logs de auditoria |
+| Jamming | Interferência RF deliberada | Detecção multi-evidência, troca de canal |
+| Spoofing RF | Falsificação de sinais | Validação de sensores, mTLS |
+| Acesso não autorizado | APIs expostas | RBAC, TLS, rate limiting |
+| Replay | Reenvio de comandos | Nonce + timestamp por comando |
+| Configuração indevida | Canais não autorizados | Allowlist, validação em 8 etapas |
 
 ### Limitações Documentadas
 
 O sistema não garante proteção contra:
+- Jamming de banda larga extremo
+- Comprometimento físico do hardware SDR
+- Ataques ao canal de comunicação sensores-servidor
+- Falhas de hardware não detectáveis
 
-- Atacantes com acesso físico prolongado e equipamento de laboratório
-- Comprometimento de firmware não detectável por sensores disponíveis
-- Vulnerabilidades de implementação de hardware (side-channel)
-- Chaves criptográficas já expostas antes da ativação do sistema
-- Ataques realizados antes da instalação e configuração do Data-Scorched Safe
+## Controle de Acesso
 
-## Desenvolvimento Seguro
+### Perfis
 
-| Ferramenta | Finalidade |
-|------------|------------|
-| `cargo fmt` | Formatação padronizada |
-| `cargo clippy` | Análise estática de código |
-| `cargo test` | Testes unitários e de integração |
-| `cargo audit` | Verificação de vulnerabilidades em dependências |
-| Lockfile | Versões fixadas de todas as dependências |
-| Hash chain | Integridade verificável dos logs de auditoria |
+| Perfil | Permissões |
+|--------|------------|
+| VIEWER | Leitura apenas |
+| OPERATOR | Leitura + comandos operacionais |
+| ADMIN | Configuração + comandos administrativos |
+| AUDITOR | Leitura + logs de auditoria |
+
+### Comandos Administrativos
+
+Todos os comandos de mudança de canal requerem:
+1. Autenticação mTLS
+2. Autorização RBAC
+3. Validação de allowlist
+4. Nonce único
+5. Timestamp válido
+6. Rate limiting
+7. Confirmação
+8. Auditoria
 
 ## Criptografia
 
 | Algoritmo | Uso |
 |-----------|-----|
-| AES-256-GCM | Criptografia de dados em repouso |
-| HMAC-SHA256 | Assinatura e verificação de integridade |
-| SHA-256 | Hash chain nos logs de auditoria |
-| Derivação de chaves | Separação de chaves por finalidade |
+| TLS 1.3 | Transporte |
+| mTLS | Autenticação sensor-servidor |
+| HMAC-SHA256 | Assinatura de comandos |
 
----
+## Auditoria
 
-*N6 Cybernetics — Hardened Security Systems*
+Todos os eventos são registrados:
+- Timestamp
+- Usuário/sensor
+- Ação realizada
+- Resultado
+- IP de origem
+
+Logs são append-only com hash chain para verificação de integridade.

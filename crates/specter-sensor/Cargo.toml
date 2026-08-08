@@ -1,0 +1,24 @@
+[package]
+name = "specter-sensor"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "RF sensor daemon: SDR control, sweep, telemetry, local buffer"
+
+[dependencies]
+specter-common = { path = "../specter-common" }
+specter-dsp = { path = "../specter-dsp" }
+specter-sdr = { path = "../specter-sdr" }
+specter-detector = { path = "../specter-detector" }
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+toml.workspace = true
+uuid.workspace = true
+chrono.workspace = true

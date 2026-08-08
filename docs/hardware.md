@@ -1,38 +1,66 @@
-# Hardware Requirements
+# Hardware Support — SPECTER-NET
 
-## Servidor
+## SDR Suportados
 
-- TPM 2.0
-- Secure Boot/UEFI
-- SSD com criptografia (LUKS2)
-- Sensor de intrusão de gabinete (se disponível)
-- NIC gerenciável
-- BMC com configuração segura (quando usado)
+### RTL-SDR
 
-## Embarcados
+- **Tipo:** Receptor passivo
+- **Custo:** Baixo
+- **Faixa:** 24 MHz — 1.766 GHz
+- **Uso recomendado:** Protótipos, sensores passivos
 
-- TPM ou Secure Element
-- Sensor físico de gabinete
-- GPIO
-- Watchdog
-- Armazenamento criptografado
-- Boot verificado (dm-verity)
+### USRP
 
-## Sensores Suportados
+- **Tipo:** Transceptor profissional
+- **Custo:** Alto
+- **Faixa:** Variável conforme modelo
+- **Uso recomendado:** Aplicações profissionais, melhor sincronização
 
-| Sensor | Tipo | Plataforma |
-|--------|------|------------|
-| Temperatura | hwmon/thermal | Linux |
-| USB | /sys/bus/usb/devices | Linux |
-| PCIe | lspci / sysfs | Linux |
-| TPM | /dev/tpm0 | Linux |
-| Secure Boot | efi/efivars | Linux UEFI |
-| Chassis | IPMI/sysfs | Variável |
+### SoapySDR
 
-## Requisitos do Sistema Operacional
+- **Tipo:** Camada de abstração
+- **Suporte:** Qualquer dispositivo com driver SoapySDR
+- **Uso recomendado:** Flexibilidade de hardware
 
-- Linux (kernel 5.4+)
-- systemd
-- UEFI (para Secure Boot)
-- TPM 2.0 driver (para TPM)
-- hwmon subsystem (para temperatura)
+## Configuração do Sensor
+
+Cada sensor deve possuir:
+- Identificador único (UUID)
+- Localização lógica configurável
+- Relógio sincronizado por NTP/PTP
+- SDR conectado
+- Processo `specter-sensor` em execução
+- Conexão autenticada com o servidor
+
+## Parâmetros RF
+
+| Parâmetro | Padrão | Descrição |
+|-----------|--------|-----------|
+| sample_rate | 2.4 MHz | Taxa de amostragem |
+| center_frequency | 433 MHz | Frequência central |
+| bandwidth | 2 MHz | Largura de banda |
+| gain | 30 dB | Ganho do receptor |
+| fft_size | 4096 | Tamanho da FFT |
+| window | Hann | Função de janela |
+| overlap | 0.5 | Sobreposição |
+| dwell_time | 100 ms | Tempo de permanência |
+
+## Tratamento de Erros
+
+O sensor trata:
+- Overflow de buffer
+- Perda do SDR
+- Driver travado
+- Ganho saturado
+- Relógio inconsistente
+- Desconexão USB/rede
+
+## SDR Não Detectado
+
+Se nenhum SDR estiver conectado, o programa exibe:
+
+```
+NO RF DEVICE AVAILABLE
+```
+
+O modo de produção não gera espectro fictício.
